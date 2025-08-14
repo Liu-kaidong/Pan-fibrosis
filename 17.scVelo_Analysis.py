@@ -14,6 +14,9 @@ IPF04 = anndata.read_loom(".../Loom/IPF_04.loom")
 IPF05 = anndata.read_loom(".../Loom/IPF_05.loom")
 HF01 = anndata.read_loom(".../Loom/HF_01.loom")
 HF02 = anndata.read_loom(".../Loom/HF_02.loom")
+HF03 = anndata.read_loom(".../Loom/HF_03.loom")
+HF04 = anndata.read_loom(".../Loom/HF_04.loom")
+HF05 = anndata.read_loom(".../Loom/HF_05.loom")
 IPF01.var_names_make_unique()
 IPF02.var_names_make_unique()
 IPF03.var_names_make_unique()
@@ -21,6 +24,9 @@ IPF04.var_names_make_unique()
 IPF05.var_names_make_unique()
 HF01.var_names_make_unique()
 HF02.var_names_make_unique()
+HF03.var_names_make_unique()
+HF04.var_names_make_unique()
+HF05.var_names_make_unique()
 
 sample_obs = pd.read_csv(".../scVelo/Input/cellID_obs.csv")
 umap = pd.read_csv(".../scVelo/Input/cell_embeddings.csv")
@@ -33,7 +39,10 @@ IPF04 = IPF04[np.isin(IPF04.obs.index,sample_obs["x"])]
 IPF05 = IPF05[np.isin(IPF05.obs.index,sample_obs["x"])]
 HF01 = HF01[np.isin(HF01.obs.index,sample_obs["x"])]
 HF02 = HF02[np.isin(HF02.obs.index,sample_obs["x"])]
-adata = IPF01.concatenate(IPF02, IPF03, IPF04, IPF05, HF01, HF02)
+HF03 = HF03[np.isin(HF03.obs.index,sample_obs["x"])]
+HF04 = HF04[np.isin(HF04.obs.index,sample_obs["x"])]
+HF05 = HF05[np.isin(HF05.obs.index,sample_obs["x"])]
+adata = IPF01.concatenate(IPF02, IPF03, IPF04, IPF05, HF01, HF02, HF03, HF04, HF05)
 
 adata_index = pd.DataFrame(adata.obs.index)
 adata_index = adata_index.rename(columns = {0:'Cell ID'})
