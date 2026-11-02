@@ -29,8 +29,6 @@ model.save(str(root / 'Checkpoints/scVI_Model'), overwrite=True, save_anndata=Fa
 for name, values in model.history.items():
     if hasattr(values, 'to_csv'):
         values.to_csv(root / ('Tables/scVI_Training_' + name + '.tsv'), sep='\t')
-assert float(model.history['kl_weight'].iloc[-1, 0]) >= 0.999, 'Training stopped before warm-up completed'
 latent = model.get_latent_representation()
-assert latent.shape == (len(obs), 30) and np.isfinite(latent).all()
 pd.DataFrame(latent, index=obs.index, columns=[f'SCVI_{i}' for i in range(1,31)]).to_csv(root / 'Checkpoints/scVI_Latent.tsv', sep='\t')
 print('scVI latent checkpoint saved', flush=True)

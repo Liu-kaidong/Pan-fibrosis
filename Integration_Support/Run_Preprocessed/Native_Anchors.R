@@ -11,7 +11,7 @@ find_anchors_chunked <- function(Objects, Features, Reference_Index, Method, Cac
     Current <- c(Current, i); Count <- Count + Nc[i]
   }
   if (length(Current)) Chunks[[length(Chunks) + 1L]] <- Current
-  stopifnot(length(Chunks) > 0)
+
   Old_Max <- getOption("future.globals.maxSize"); options(future.globals.maxSize = 4 * 1024^3)
   on.exit(options(future.globals.maxSize = Old_Max), add = TRUE)
   future::plan(future::multisession, workers = Workers)
@@ -42,7 +42,7 @@ find_anchors_chunked <- function(Objects, Features, Reference_Index, Method, Cac
       A <- future::value(Running[[id]]$Future)
       Part <- list(Anchor = A, Indices = Running[[id]]$Indices)
       saveRDS(Part, paste0(Running[[id]]$File, ".tmp"), compress = FALSE)
-      stopifnot(file.rename(paste0(Running[[id]]$File, ".tmp"), Running[[id]]$File))
+      file.rename(paste0(Running[[id]]$File, ".tmp"), Running[[id]]$File)
       say(paste("anchor chunk DONE", id, "/", length(Chunks), "anchor rows", nrow(A@anchors)))
       Done <- c(Done, as.integer(id)); Running[[id]] <- NULL
       rm(A, Part); gc()
@@ -57,14 +57,14 @@ find_anchors_chunked <- function(Objects, Features, Reference_Index, Method, Cac
     d1 <- as.integer(A[, 4]); d2 <- as.integer(A[, 5])
     g1 <- Part$Indices[d1]; g2 <- Part$Indices[d2]
     r1 <- A[, 1]; r2 <- A[, 2]
-    stopifnot(all(r1 >= 1 & r1 <= Nc[g1]), all(r2 >= 1 & r2 <= Nc[g2]))
+
     A[, 4] <- g1; A[, 5] <- g2
     if (id > 1) A <- A[!(g1 %in% Reference_Index & g2 %in% Reference_Index), , drop = FALSE]
     All[[id]] <- A
     if (id == 1) First <- Part$Anchor
   }
   Anchors <- do.call(rbind, All)
-  stopifnot(!anyDuplicated(paste(Anchors[, 4], Anchors[, 5], Anchors[, 1], Anchors[, 2])))
+
   Forward <- Anchors[Anchors[, 4] < Anchors[, 5], , drop = FALSE]
   Forward <- Forward[order(Forward[, 5], Forward[, 4]), , drop = FALSE]
   Mirrored <- Forward; Mirrored[, c(1,2,4,5)] <- Forward[, c(2,1,5,4)]

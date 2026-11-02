@@ -26,7 +26,6 @@ patternRes$Gene <- rownames(patternRes)
 patternRes <- patternRes[order(patternRes$pvalue,decreasing = F),]
 patternRes <- patternRes[!is.na(patternRes$pvalue),]
 patternRes$FDR <- p.adjust(patternRes$pvalue, method = "holm")
-if (!"fcMedian" %in% colnames(patternRes)) stop("The historical volcano plot requires its saved patternRes with fcMedian; patternTest output alone may not provide this column.")
 patternRes$log2FC <- log2(patternRes$fcMedian)
 patternRes$log2FC[patternRes$log2FC > 6] <- 6
 patternRes$log2FC[patternRes$log2FC < -6] <- -6

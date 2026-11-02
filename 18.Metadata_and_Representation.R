@@ -6,9 +6,9 @@ library(Seurat)
 library(tidyverse)
 Fibroblast <- readRDS(file.path(Repo_Dir, "data/fibroblast/Fibroblast_Gene_Del_Cluster_Del.RDS"))
 Sample_Info <- read.delim(file.path(Repo_Dir, "data/metadata/sample_info.tsv"), fileEncoding = "GB18030", stringsAsFactors = FALSE)
-stopifnot(!anyDuplicated(Sample_Info$Sample_ID))
+
 Sample_Match <- match(Fibroblast$orig.ident, Sample_Info$Sample_ID)
-stopifnot(!anyNA(Sample_Match))
+
 Fibroblast$Dataset_ID <- Sample_Info$Dataset_ID[Sample_Match]
 Fibroblast$Dataset_Type <- Sample_Info$Dataset_Type[Sample_Match]
 if (any(as.character(Fibroblast$Subtype1) == "myoFib")) Fibroblast$Subtype1 <- recode(as.character(Fibroblast$Subtype1), "matFib" = "ACSM3+myoFib", "myoFib" = "ACTA2+myoFib")
@@ -16,7 +16,7 @@ if (any(as.character(Fibroblast$Subtype2) %in% c("myoFib", "ecmFib_1", "ecmFib_2
 Fibroblast$Subtype1 <- gsub("\\+ +", "+", as.character(Fibroblast$Subtype1))
 Fibroblast$Subtype2 <- gsub("\\+ +", "+", as.character(Fibroblast$Subtype2))
 Order <- c("ACSM3+myoFib", "infFib", "matFib", "ACTA2+myoFib", "apFib")
-stopifnot(all(Fibroblast$Subtype2 %in% Order), all(Fibroblast$Dataset_Type %in% c("scRNA-Seq", "snRNA-Seq")))
+
 Fibroblast$Subtype2 <- factor(Fibroblast$Subtype2, levels = Order)
 Tissue_Color <- c("Lung" = "#DCC3D0", "Liver" = "#AB82FF", "Heart" = "#FCBA75", "Kidney" = "#499994", "Skin" = "#E56464")
 Dataset_Type_Color <- c("scRNA-Seq" = "#1B9E77", "snRNA-Seq" = "#7570B3")

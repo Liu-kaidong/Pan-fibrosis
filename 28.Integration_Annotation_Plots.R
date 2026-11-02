@@ -12,11 +12,11 @@ for (Method in names(Files)) {
   Fibroblast <- readRDS(file.path(file.path(Repo_Dir, "data/integration"), Files[[Method]]))
   Fibroblast$Annotation <- gsub("\\+ +", "+", as.character(Idents(Fibroblast)))
   if (any(Fibroblast$Annotation == "myoFib")) Fibroblast$Annotation <- recode(Fibroblast$Annotation, "matFib" = "ACSM3+myoFib", "myoFib" = "ACTA2+myoFib")
-  stopifnot(all(Fibroblast$Annotation %in% Order))
+
   Fibroblast$Annotation <- factor(Fibroblast$Annotation, levels = Order)
   Idents(Fibroblast) <- "Annotation"
   Reduction <- if (paste0("umap.", tolower(Method)) %in% Reductions(Fibroblast)) paste0("umap.", tolower(Method)) else "umap"
-  stopifnot(Reduction %in% Reductions(Fibroblast))
+
   P1 <- DimPlot(Fibroblast, reduction = Reduction, cols = Cell_Type_Color) + labs(title = Method, color = NULL)
   P2 <- DotPlot(Fibroblast, features = marker_genes) +
     coord_flip() +

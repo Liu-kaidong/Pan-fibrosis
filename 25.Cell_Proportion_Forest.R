@@ -6,7 +6,7 @@ setwd(file.path(Repo_Dir, "Results/Proportions"))
 library(tidyverse)
 
 Tissue_Color <- c("Lung" = "#DCC3D0", "Liver" = "#AB82FF", "Heart" = "#FCBA75", "Kidney" = "#499994", "Skin" = "#E56464")
-dir.create("主图森林图", showWarnings = FALSE)
+dir.create("Forest_Plots", showWarnings = FALSE)
 
 for (Figure in c("1e", "2d", "3b", "5h")) {
   Result <- read_tsv(paste0("Fig.", Figure, "/Fig", Figure, "_Split_BetaBinomial_Results.tsv"), na = c("NA", ""), show_col_types = FALSE)
@@ -60,6 +60,6 @@ for (Figure in c("1e", "2d", "3b", "5h")) {
           plot.margin = margin(5.5, 10, 5.5, 5.5), panel.spacing = grid::unit(6, "mm"), plot.caption = element_text(size = 8, hjust = 0))
 
   if (interactive()) print(P1)
-  ggsave(paste0("主图森林图/Fig", Figure, "_BetaBinomial_Forest.pdf"), P1, device = cairo_pdf,
+  ggsave(paste0("Forest_Plots/Fig", Figure, "_BetaBinomial_Forest.pdf"), P1, device = cairo_pdf,
          width = if (Figure == "3b") 7 else 12, height = if (Figure == "1e") 10 else 3.8, units = "in")
 }

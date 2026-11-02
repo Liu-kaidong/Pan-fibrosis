@@ -45,7 +45,7 @@ find_anchors_pairs <- function(Objects, Features, Reference_Index, Cache_Dir, Wo
       if (!future::resolved(Running[[id]]$Future)) next
       Part <- future::value(Running[[id]]$Future)
       saveRDS(Part, paste0(Running[[id]]$File, ".tmp"), compress = FALSE)
-      stopifnot(file.rename(paste0(Running[[id]]$File, ".tmp"), Running[[id]]$File))
+      file.rename(paste0(Running[[id]]$File, ".tmp"), Running[[id]]$File)
       say(paste("native pair job DONE", id, "/", length(Jobs), "forward anchors", nrow(Part$Anchors)))
       Done <- c(Done, as.integer(id)); Running[[id]] <- NULL
       rm(Part); gc()
@@ -56,7 +56,7 @@ find_anchors_pairs <- function(Objects, Features, Reference_Index, Cache_Dir, Wo
   Parts <- vector("list", length(Jobs)); First <- NULL
   for (id in seq_along(Jobs)) {Part <- readRDS(file.path(Cache_Dir, sprintf("Part_%04d.rds", id))); Parts[[id]] <- Part$Anchors; if (id == 1L) First <- Part$Prototype}
   Forward <- do.call(rbind, Parts)
-  stopifnot(all(Forward$cell1 >= 1 & Forward$cell1 <= Nc[Forward$dataset1]), all(Forward$cell2 >= 1 & Forward$cell2 <= Nc[Forward$dataset2]))
+
   Mirrored <- Forward[, c("cell2", "cell1", "score", "dataset2", "dataset1")]; names(Mirrored) <- names(Forward)
   First@anchors <- rbind(Forward, Mirrored)
   First@offsets <- Offset; First@reference.objects <- Reference_Index

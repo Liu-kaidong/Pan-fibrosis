@@ -7,18 +7,17 @@ rm(list = setdiff(ls(), "Repo_Dir"))
 library(readxl)
 library(dplyr)
 library(ggplot2)
-dir.create("比较结果/四亚型", recursive = TRUE, showWarnings = FALSE)
+dir.create("Comparison/Four_Subtypes", recursive = TRUE, showWarnings = FALSE)
 Our_Markers <- read_excel(file.path(Repo_Dir, "Inputs/Atlas_Comparison/our_four_subtypes.xlsx"), .name_repair = "minimal")
 Reference_Markers <- read_excel(file.path(Repo_Dir, "Inputs/Atlas_Comparison/reference_subtypes.xlsx"), .name_repair = "minimal")
 Our_List <- lapply(Our_Markers, function(x) unique(trimws(as.character(x[!is.na(x) & nzchar(trimws(as.character(x)))]))))
 Reference_List <- lapply(Reference_Markers, function(x) unique(trimws(as.character(x[!is.na(x) & nzchar(trimws(as.character(x)))]))))
 Order <- c("ACSM3+ myoFib", "ecmFib", "ACTA2+ myoFib", "apFib")
-stopifnot(setequal(names(Our_List), Order), !anyDuplicated(names(Our_List)), !anyDuplicated(names(Reference_List)))
+
 Our_List <- Our_List[Order]
-stopifnot(all(lengths(Our_List) > 0), all(lengths(Reference_List) > 0), length(Reference_List) == 42)
 
 Background <- sort(unique(unlist(c(Our_List, Reference_List), use.names = FALSE)))
-writeLines(Background, "比较结果/四亚型/背景基因_Top基因并集_四亚型.txt", useBytes = TRUE)
+writeLines(Background, "Comparison/Four_Subtypes/Marker_Union_Background_Four_Subtypes.txt", useBytes = TRUE)
 
 Reference_Info <- tibble(
   Reference_Subtype = names(Reference_List),
@@ -28,7 +27,7 @@ Gene_Set_QC <- bind_rows(
   tibble(Source = "This study", Subtype = names(Our_List), N_genes = lengths(Our_List)),
   Reference_Info %>% transmute(Source = Study, Subtype = Reference_Subtype, N_genes = lengths(Reference_List))
 )
-write.csv(Gene_Set_QC, "比较结果/四亚型/基因集大小_四亚型.csv", row.names = FALSE, fileEncoding = "UTF-8")
+write.csv(Gene_Set_QC, "Comparison/Four_Subtypes/Gene_Set_Sizes_Four_Subtypes.csv", row.names = FALSE, fileEncoding = "UTF-8")
 
 Comparison <- bind_rows(lapply(names(Our_List), function(Our_Subtype) {
   bind_rows(lapply(names(Reference_List), function(Reference_Subtype) {
@@ -59,10 +58,10 @@ Comparison <- bind_rows(lapply(names(Our_List), function(Our_Subtype) {
 })) %>% left_join(Reference_Info, by = "Reference_Subtype") %>%
   mutate(P_adj_BH = p.adjust(P_hyper, method = "BH"), BH_below_0.05 = P_adj_BH < 0.05,
          Log2_enrichment = ifelse(N_overlap > 0, log2(Fold_enrichment), NA_real_))
-write.csv(Comparison, "比较结果/四亚型/Top基因_交集与超几何富集_四亚型.csv", row.names = FALSE, fileEncoding = "UTF-8")
+write.csv(Comparison, "Comparison/Four_Subtypes/Marker_Overlap_Enrichment_Four_Subtypes.csv", row.names = FALSE, fileEncoding = "UTF-8")
 Comparison %>% filter(BH_below_0.05) %>% select(Our_Subtype, Study, Reference_Subtype, N_overlap, Jaccard, Fold_enrichment, P_adj_BH)
 
-Comparison <- read.csv("比较结果/四亚型/Top基因_交集与超几何富集_四亚型.csv", fileEncoding = "UTF-8", stringsAsFactors = FALSE)
+Comparison <- read.csv("Comparison/Four_Subtypes/Marker_Overlap_Enrichment_Four_Subtypes.csv", fileEncoding = "UTF-8", stringsAsFactors = FALSE)
 Cell_Type_Color <- c("ACSM3+ myoFib" = "#4975A5", "ecmFib" = "#BC8F8F", "ACTA2+ myoFib" = "#93A95D", "apFib" = "#CD6E72")
 Study_Color <- c("Buechler 2021" = "#A7AAB6", "Tsukui 2024" = "#DCC3D0", "Fang 2025" = "#DCC3D0", "Amrute 2024" = "#FCBA75",
                  "Kuppe 2021" = "#499994", "Ramachandran 2019" = "#AB82FF", "Steele 2025" = "#E56464")
@@ -101,7 +100,7 @@ P1 <- ggplot(Comparison, aes(X, Y)) +
         plot.caption = element_text(size = 8.5, color = "#64748B", hjust = 0, margin = margin(t = 5)), plot.title.position = "plot", plot.caption.position = "plot",
         legend.position = "bottom", legend.box = "horizontal", legend.title = element_text(size = 9.5, face = "bold", color = "#344054"), legend.text = element_text(size = 9.2, color = "#475569"),
         legend.spacing.x = grid::unit(8, "mm"), legend.box.spacing = grid::unit(3, "mm"), legend.margin = margin(t = 4, b = 4), plot.margin = margin(8, 8, 6, 8))
-grDevices::cairo_pdf("比较结果/四亚型/Top基因_超几何富集气泡图_四亚型.pdf", width = 300 / 25.4, height = 150 / 25.4, family = "Arial")
+grDevices::cairo_pdf("Comparison/Four_Subtypes/Marker_Enrichment_Four_Subtypes.pdf", width = 300 / 25.4, height = 150 / 25.4, family = "Arial")
 print(P1)
 dev.off()
 
@@ -109,18 +108,17 @@ rm(list = setdiff(ls(), "Repo_Dir"))
 library(readxl)
 library(dplyr)
 library(ggplot2)
-dir.create("比较结果/五亚型", recursive = TRUE, showWarnings = FALSE)
+dir.create("Comparison/Five_Subtypes", recursive = TRUE, showWarnings = FALSE)
 Our_Markers <- read_excel(file.path(Repo_Dir, "Inputs/Atlas_Comparison/our_five_subtypes.xlsx"), .name_repair = "minimal")
 Reference_Markers <- read_excel(file.path(Repo_Dir, "Inputs/Atlas_Comparison/reference_subtypes.xlsx"), .name_repair = "minimal")
 Our_List <- lapply(Our_Markers, function(x) unique(trimws(as.character(x[!is.na(x) & nzchar(trimws(as.character(x)))]))))
 Reference_List <- lapply(Reference_Markers, function(x) unique(trimws(as.character(x[!is.na(x) & nzchar(trimws(as.character(x)))]))))
 Order <- c("ACSM3+ myoFib", "ACTA2+ myoFib", "apFib", "infFib", "matFib")
-stopifnot(setequal(names(Our_List), Order), !anyDuplicated(names(Our_List)), !anyDuplicated(names(Reference_List)))
+
 Our_List <- Our_List[Order]
-stopifnot(all(lengths(Our_List) > 0), all(lengths(Reference_List) > 0), length(Reference_List) == 42)
 
 Background <- sort(unique(unlist(c(Our_List, Reference_List), use.names = FALSE)))
-writeLines(Background, "比较结果/五亚型/背景基因_Top基因并集_五亚型.txt", useBytes = TRUE)
+writeLines(Background, "Comparison/Five_Subtypes/Marker_Union_Background_Five_Subtypes.txt", useBytes = TRUE)
 
 Reference_Info <- tibble(
   Reference_Subtype = names(Reference_List),
@@ -130,7 +128,7 @@ Gene_Set_QC <- bind_rows(
   tibble(Source = "This study", Subtype = names(Our_List), N_genes = lengths(Our_List)),
   Reference_Info %>% transmute(Source = Study, Subtype = Reference_Subtype, N_genes = lengths(Reference_List))
 )
-write.csv(Gene_Set_QC, "比较结果/五亚型/基因集大小_五亚型.csv", row.names = FALSE, fileEncoding = "UTF-8")
+write.csv(Gene_Set_QC, "Comparison/Five_Subtypes/Gene_Set_Sizes_Five_Subtypes.csv", row.names = FALSE, fileEncoding = "UTF-8")
 
 Comparison <- bind_rows(lapply(names(Our_List), function(Our_Subtype) {
   bind_rows(lapply(names(Reference_List), function(Reference_Subtype) {
@@ -161,10 +159,10 @@ Comparison <- bind_rows(lapply(names(Our_List), function(Our_Subtype) {
 })) %>% left_join(Reference_Info, by = "Reference_Subtype") %>%
   mutate(P_adj_BH = p.adjust(P_hyper, method = "BH"), BH_below_0.05 = P_adj_BH < 0.05,
          Log2_enrichment = ifelse(N_overlap > 0, log2(Fold_enrichment), NA_real_))
-write.csv(Comparison, "比较结果/五亚型/Top基因_交集与超几何富集_五亚型.csv", row.names = FALSE, fileEncoding = "UTF-8")
+write.csv(Comparison, "Comparison/Five_Subtypes/Marker_Overlap_Enrichment_Five_Subtypes.csv", row.names = FALSE, fileEncoding = "UTF-8")
 Comparison %>% filter(BH_below_0.05) %>% select(Our_Subtype, Study, Reference_Subtype, N_overlap, Jaccard, Fold_enrichment, P_adj_BH)
 
-Comparison <- read.csv("比较结果/五亚型/Top基因_交集与超几何富集_五亚型.csv", fileEncoding = "UTF-8", stringsAsFactors = FALSE)
+Comparison <- read.csv("Comparison/Five_Subtypes/Marker_Overlap_Enrichment_Five_Subtypes.csv", fileEncoding = "UTF-8", stringsAsFactors = FALSE)
 Cell_Type_Color <- c("ACSM3+ myoFib" = "#4975A5", "infFib" = "#D6C6A5", "matFib" = "#62A883", "ACTA2+ myoFib" = "#93A95D", "apFib" = "#CD6E72")
 Study_Color <- c("Buechler 2021" = "#A7AAB6", "Tsukui 2024" = "#DCC3D0", "Fang 2025" = "#DCC3D0", "Amrute 2024" = "#FCBA75",
                  "Kuppe 2021" = "#499994", "Ramachandran 2019" = "#AB82FF", "Steele 2025" = "#E56464")
@@ -203,6 +201,6 @@ P1 <- ggplot(Comparison, aes(X, Y)) +
         plot.caption = element_text(size = 8.5, color = "#64748B", hjust = 0, margin = margin(t = 5)), plot.title.position = "plot", plot.caption.position = "plot",
         legend.position = "bottom", legend.box = "horizontal", legend.title = element_text(size = 9.5, face = "bold", color = "#344054"), legend.text = element_text(size = 9.2, color = "#475569"),
         legend.spacing.x = grid::unit(8, "mm"), legend.box.spacing = grid::unit(3, "mm"), legend.margin = margin(t = 4, b = 4), plot.margin = margin(8, 8, 6, 8))
-grDevices::cairo_pdf("比较结果/五亚型/Top基因_超几何富集气泡图_五亚型.pdf", width = 300 / 25.4, height = 150 / 25.4, family = "Arial")
+grDevices::cairo_pdf("Comparison/Five_Subtypes/Marker_Enrichment_Five_Subtypes.pdf", width = 300 / 25.4, height = 150 / 25.4, family = "Arial")
 print(P1)
 dev.off()

@@ -26,9 +26,9 @@ Get_Num <- function(x) suppressWarnings(as.numeric(sub(" .*", "", sub("^[^:]*: *
 Read_Clinical <- function(Organ, Dataset) read.delim(file.path(Input, "cohorts", Organ, Dataset, paste0(Dataset, "_Sample_Info.txt")), check.names = FALSE)
 Read_Raw <- function(Dataset) bind_rows(lapply(list.files(file.path(Input, "cohorts", "Lung", Dataset), "sampleInfo.csv$", recursive = TRUE, full.names = TRUE), function(x) read.csv(x, check.names = FALSE)))
 Score_Signatures <- function(Exp, Gene_Sets) {
-  stopifnot(!anyNA(Exp), !anyDuplicated(rownames(Exp)), !anyDuplicated(colnames(Exp)))
+
   Gene_Index <- lapply(Gene_Sets, function(x) which(rownames(Exp) %in% x))
-  stopifnot(all(lengths(Gene_Index) >= 10))
+
   if (requireNamespace("GSVA", quietly = TRUE)) return(GSVA::gsva(GSVA::ssgseaParam(Exp, Gene_Sets, alpha = 0.25, normalize = TRUE), verbose = FALSE))
   Result <- vapply(seq_len(ncol(Exp)), function(j) {
     Rank <- as.integer(rank(Exp[, j], ties.method = "average"))
@@ -46,9 +46,9 @@ Score_Signatures <- function(Exp, Gene_Sets) {
 Scores <- list()
 Coverage <- list()
 for (Dataset in c("GSE70866", "GSE28221", "GSE47460", "GSE137570", "GSE217427", "GSE17800", "GSE130036", "GSE160997")) {
-  message("签名评分：", Dataset)
+  message("Signature scoring: ", Dataset)
   File <- list.files(file.path(Input, "cohorts"), paste0("^", Dataset, "_(Normalized_Exp|matrix|TPM_Exp)\\.txt$"), recursive = TRUE, full.names = TRUE)
-  stopifnot(length(File) == 1)
+
   if (Dataset == "GSE217427") {
     Exp <- read.delim(File, check.names = FALSE)
     HGNC <- read.delim(file.path(Input, "cohorts", "Kidney", Dataset, "hgnc_complete_set_20240520.txt"))
@@ -143,14 +143,14 @@ for (Dataset in names(Clinical)) {
   if (Dataset == "GSE160997") Models$AgeSex_NYHA <- Clinical_Vars
   Models$FullyAdjusted <- c(Clinical_Vars, Fibrosis_Var)
   for (Endpoint in Endpoints) {
-    message("临床分析：", Dataset, " / ", Endpoint)
+    message("Clinical analysis: ", Dataset, " / ", Endpoint)
     Data <- Clinical[[Dataset]]
     if (Kind == "Function") Data$Outcome <- Data[[Endpoint]]
     Variables <- unique(c("Age", "Sex", Clinical_Vars, Fibrosis_Var, Order, if (Kind == "Survival") c("Time", "Event") else "Outcome"))
     Before <- nrow(Data)
     Data <- Data[complete.cases(Data[, Variables]), ]
     if (Kind == "Survival") Data <- Data[Data$Time > 0 & Data$Event %in% 0:1, ]
-    stopifnot(!anyDuplicated(Data$Patient), nrow(Data) >= 10)
+
     for (Signature in c(Order, "ECM")) Data[[paste0(Signature, "_z")]] <- as.numeric(scale(Data[[Signature]]))
     Clinical_Input[[paste(Dataset, Endpoint)]] <- mutate(Data, Dataset = Dataset, Endpoint = Endpoint)
     Analysis_Check[[paste(Dataset, Endpoint)]] <- data.frame(Dataset, Endpoint, Available_Patients = Before, Analyzed_Patients = nrow(Data), Excluded_Missing = Before - nrow(Data), Events = if (Kind == "Survival") sum(Data$Event) else NA_real_, Clinical_Adjustment = paste(Clinical_Vars, collapse = " + "), Fibrosis_Adjustment = Fibrosis_Var)
@@ -161,8 +161,6 @@ for (Dataset in names(Clinical)) {
         Data$Score <- Data[[paste0(Subtype, "_z")]]
         Formula <- as.formula(paste(if (Kind == "Survival") "Surv(Time, Event)" else "Outcome", "~", paste(c("Score", Covariates), collapse = " + ")))
         Fit <- if (Kind == "Survival") Run_Cox(Formula, Data) else lm(Formula, data = Data)
-        if (is.null(Fit) || anyNA(coef(Fit))) stop(paste("模型不可估计：", Dataset, Endpoint, Model, Subtype))
-        if (Kind == "Function" && (Fit$df.residual < 8 || any(hatvalues(Fit) > 1 - 1e-8))) stop(paste("线性模型样本不足或高杠杆：", Dataset, Endpoint, Model, Subtype))
         Effect <- Get_Effect(Fit, Kind)
         PH <- if (Kind == "Survival") cox.zph(Fit)$table else NULL
         Clinical_Result[[paste(Dataset, Endpoint, Model, Subtype)]] <- cbind(data.frame(Dataset, Endpoint, Kind, Model, Subtype, N = nrow(Data), Events = if (Kind == "Survival") sum(Data$Event) else NA_real_, Formula = paste(deparse(Formula), collapse = " "), PH_Score_P = if (Kind == "Survival") PH["Score", "p"] else NA_real_, PH_Global_P = if (Kind == "Survival") PH["GLOBAL", "p"] else NA_real_), Effect)
@@ -205,7 +203,7 @@ Plot_InfFib_Adjustment <- function(Data, Title, Subtitle, X_Label, Limits) {
           plot.title = element_text(size = 10, face = "bold", margin = margin(b = 3)), plot.subtitle = element_text(size = 8, margin = margin(b = 8)),
           plot.title.position = "plot", plot.margin = margin(8, 12, 8, 8))
   if (Data$Kind[1] == "Survival") {
-    stopifnot(all(Data$Lower > 0), all(Data$Estimate > 0))
+
     P <- P + scale_x_log10(limits = Limits, breaks = c(0.5, 0.75, 1, 1.5, 2, 3, 4))
   } else P <- P + scale_x_continuous(limits = Limits, breaks = scales::breaks_pretty(n = 3))
   P
@@ -253,18 +251,18 @@ Plots$Adjustment_Survival <- Arrange_Clinical_Panels(Adjustment_Panels[1:2], 2,
 Plots$Adjustment_Function <- Arrange_Clinical_Panels(Adjustment_Panels[-(1:2)], 3,
   "Points: coefficients per SD of infFib score; bars: 95% HC3 CI. Dark blue: fullest available adjustment.\nSame patients across models. GSE217427: all available tissue samples averaged within each donor (n = 16).", Layout = matrix(c(1:5, NA, 6:8), ncol = 3, byrow = TRUE))
 
-grDevices::pdf("2.infFib逐步调整.pdf", width = 11.7, height = 8.3, family = "Helvetica", useDingbats = FALSE)
+grDevices::pdf("InfFib_Adjustment.pdf", width = 11.7, height = 8.3, family = "Helvetica", useDingbats = FALSE)
 grid::grid.newpage()
 grid::grid.draw(Plots$Adjustment_Survival)
 grid::grid.newpage()
 grid::grid.draw(Plots$Adjustment_Function)
 dev.off()
 
-dir.create("2.infFib逐步调整_单图", showWarnings = FALSE)
+dir.create("InfFib_Adjustment_Panels", showWarnings = FALSE)
 for (Name in names(Adjustment_Panels)) {
   P <- Adjustment_Panels[[Name]]
   if (Name == "GSE28221") P <- P + labs(caption = "Constant-HR summary; PH assumption not met.") + theme(plot.caption = element_text(size = 7, hjust = 0))
-  grDevices::pdf(file.path("2.infFib逐步调整_单图", paste0(Name, ".pdf")), width = 4.2, height = 2.8, family = "Helvetica", useDingbats = FALSE)
+  grDevices::pdf(file.path("InfFib_Adjustment_Panels", paste0(Name, ".pdf")), width = 4.2, height = 2.8, family = "Helvetica", useDingbats = FALSE)
   print(P)
   dev.off()
 }

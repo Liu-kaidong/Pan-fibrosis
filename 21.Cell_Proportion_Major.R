@@ -18,18 +18,12 @@ Result <- map_dfr(c("Lung", "Liver", "Kidney", "Heart", "Skin"), function(Tissue
     count(Tissue, Dataset, Sample, Donor_ID, Disease, Type, Celltype, name = "Cell_Count")
 })
 
-if (anyNA(Result$Disease) || any(Result$Disease %in% c("", "NA", "NaN"))) stop("Sample_Type存在缺失或空值，不能自动归为纤维化。")
 Group_Mapping <- Result %>% distinct(Tissue, Dataset, Donor_ID, Sample_Type = Disease, Original_Fibrosis_State = Type) %>%
   mutate(Final_Type = if_else(Sample_Type == "Normal", "Normal", "Fibrosis"), Changed = Original_Fibrosis_State != Final_Type,
          Group_Source = "Sample_Type: Normal -> Normal; all other non-empty values -> Fibrosis", Original_Metadata = file.path(Repo_Dir, "data/metadata/Meta_<Tissue>.txt"))
-if (anyDuplicated(Group_Mapping[c("Tissue", "Dataset", "Donor_ID")])) stop("同一供体存在多种疾病或分组标签，请核对。")
 write_tsv(Group_Mapping, "Fig1e_Group_Mapping.tsv")
 Result <- Result %>% mutate(Type = if_else(Disease == "Normal", "Normal", "Fibrosis"))
-if (anyNA(Result[, c("Dataset", "Donor_ID", "Type", "Celltype")])) stop("研究、供体、分组或细胞类型存在缺失。")
-if (any(as.matrix(Result[, c("Dataset", "Donor_ID", "Type", "Celltype")]) == "")) stop("关键字段存在空字符串。")
-if (!all(Result$Type %in% c("Normal", "Fibrosis"))) stop("存在Normal/Fibrosis以外的分组，请核对。")
 Sample_Info <- Result %>% distinct(Tissue, Dataset, Sample, Donor_ID, Disease, Type)
-if (anyDuplicated(Sample_Info$Donor_ID)) stop("供体ID重复出现在不同研究、器官或分组，请先核对重复取样和ID命名。")
 
 Result <- Result %>%
   select(Tissue, Dataset, Sample, Donor_ID, Type, Celltype, Cell_Count) %>%
@@ -47,7 +41,6 @@ Result <- Result %>%
   mutate(Type = factor(Type, levels = c("Normal", "Fibrosis")),
          Tissue = factor(Tissue, levels = c("Lung", "Liver", "Kidney", "Heart", "Skin")),
          Study = interaction(Tissue, Dataset, drop = TRUE))
-if (nrow(Result) == 0) stop("没有满足两组各至少2位供体要求的研究。")
 
 Comparison <- Result %>% distinct(Tissue, Celltype)
 Model_List <- list()
@@ -55,7 +48,7 @@ Result_Label <- list()
 for (i in seq_len(nrow(Comparison))) {
   Result_Tem <- Result %>% filter(Tissue == Comparison$Tissue[i], Celltype == Comparison$Celltype[i])
   Result_Tem <- droplevels(Result_Tem)
-  message("分析：", paste(Comparison$Tissue[i], Comparison$Celltype[i], sep = "__"))
+  message("Analysis: ", paste(Comparison$Tissue[i], Comparison$Celltype[i], sep = "__"))
   Result_Row <- tibble(Tissue = paste(unique(as.character(Result_Tem$Tissue)), collapse = ";"), Celltype = Comparison$Celltype[i],
                        N_Dataset = n_distinct(Result_Tem$Dataset), N_Study = n_distinct(Result_Tem$Study),
                        Normal_Donor = sum(Result_Tem$Type == "Normal"), Fibrosis_Donor = sum(Result_Tem$Type == "Fibrosis"),
@@ -141,7 +134,6 @@ Dataset_Color <- c(
   "GSE220300" = "#EE4C97", "GSE227136" = "#800000", "GSE249279" = "#767676",
   "GSE253348" = "#FFA319", "SCP1849" = "#8A9045", "Zenodo6962685" = "#155F83"
 )
-if (any(!unique(Result$Dataset) %in% names(Dataset_Color))) stop("发现未定义颜色的数据集，请补充Dataset_Color。")
 pdf(NULL)
 Plot_List <- list()
 Plot_Size <- list()

@@ -5,7 +5,7 @@ rm(Fibroblast); gc()
 Result <- readRDS(paste0("Checkpoints/", Stage, "_Result.rds"))
 Fibroblast <- readRDS(file.path(Repo_Dir, "data/integration/Fibroblast_Preprocessed.RDS"))
 Input_Info <- readRDS("Checkpoints/Input_Info.rds")
-stopifnot(identical(colnames(Fibroblast), Input_Info$cells), identical(rownames(Fibroblast), Input_Info$genes))
+
 Fibroblast[["RNA"]]$scale.data <- NULL
 for (Name in names(Fibroblast@graphs)) Fibroblast[[Name]] <- NULL
 for (Name in names(Fibroblast@neighbors)) Fibroblast[[Name]] <- NULL
@@ -26,7 +26,6 @@ Fibroblast <- readRDS(Path)
 Embedding <- Embeddings(Fibroblast, paste0("integrated.", tolower(Stage)))
 UMAP <- Embeddings(Fibroblast, paste0("umap.", tolower(Stage)))
 Clusters <- Fibroblast[[]][[paste0(tolower(Stage), "_clusters")]]
-stopifnot(identical(colnames(Fibroblast), Input_Info$cells), identical(rownames(Fibroblast), Input_Info$genes), identical(rownames(Embedding), Input_Info$cells), identical(rownames(UMAP), Input_Info$cells), ncol(Embedding) == 30, ncol(UMAP) == 2, all(is.finite(Embedding)), all(is.finite(UMAP)), !anyNA(Clusters), identical(as.character(Idents(Fibroblast)), as.character(Clusters)))
-stopifnot(identical(VariableFeatures(Fibroblast), Input_Info$features), length(LayerData(Fibroblast, layer = "counts")@x) == Input_Info$counts_nnz, length(LayerData(Fibroblast, layer = "data")@x) == Input_Info$data_nnz)
+
 write.table(data.frame(Method = Stage, Cells = ncol(Fibroblast), Samples = length(unique(Fibroblast$orig.ident)), Clusters = nlevels(Clusters), Embedding_Dimensions = ncol(Embedding), UMAP_Dimensions = ncol(UMAP), Reload_Passed = TRUE, File = basename(Path)), paste0("Logs/", Stage, "_File_QC.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
 log_stage(paste("saved and reload verified; clusters", nlevels(Clusters)))

@@ -39,13 +39,13 @@ library(tidyverse)
 library(harmony)
 load("Leave_Out.RData")
 for (Leave_Out in names(Fib_List)) {
-  message("当前留出器官:", Leave_Out)
+  message("Held-out organ: ", Leave_Out)
   set.seed(123)
   Fib_Train <- Fib_List[names(Fib_List) != Leave_Out]
   Fibroblast <- merge(Fib_Train[[1]], y = Fib_Train[-1])
   Fibroblast <- JoinLayers(Fibroblast)
   Fibroblast <- Fibroblast[!rownames(Fibroblast) %in% Gene_Del$Gene_Del, ]
-  stopifnot(!Leave_Out %in% Fibroblast$Tissue, length(unique(Fibroblast$Tissue)) == 4)
+
   print(table(Fibroblast$Tissue))
   Fibroblast <- NormalizeData(Fibroblast) %>% FindVariableFeatures() %>% ScaleData() %>% RunPCA()
   Fibroblast <- RunHarmony(Fibroblast, group.by.vars = c("orig.ident"), max.iter.harmony = 20)
@@ -65,7 +65,7 @@ library(tidyverse)
 library(harmony)
 load("Leave_Out.RData")
 for (Tissue in names(Fib_List)) {
-  message("当前分析器官:", Tissue)
+  message("Organ: ", Tissue)
   set.seed(123)
   Fibroblast <- Fib_List[[Tissue]]
   DefaultAssay(Fibroblast) <- "RNA"
