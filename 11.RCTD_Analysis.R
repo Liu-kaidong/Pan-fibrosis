@@ -1,20 +1,19 @@
-
-
+Repo_Dir <- normalizePath(if (exists("Repo_Dir")) Repo_Dir else ".", winslash = "/", mustWork = TRUE)
 
 library(Seurat)
 library(dplyr)
 library(spacexr)
 
 #1.Reference
-SC <- readRDS(".../SC.RDS")
+SC <- readRDS(file.path(Repo_Dir, "data/SC.RDS"))
 Count_SC <- as.matrix(GetAssayData(SC, assay = "RNA", layer = "counts"))
 CellType_SC <- Idents(SC)
 Object_SC <- Reference(Count_SC, CellType_SC, n_max_cells = 100)
 
 #2.ST Deconvolution
-Sample_Info <- read.delim(".../ST_Sample_Info.txt")
-HGNC_PCG <- read.delim(".../HGNC_20240123_PCG.txt")
-Gene_Del <- read.delim(".../Blacklist.txt")
+Sample_Info <- read.delim(file.path(Repo_Dir, "data/ST_Sample_Info.txt"))
+HGNC_PCG <- read.delim(file.path(Repo_Dir, "data/HGNC_20240123_PCG.txt"))
+Gene_Del <- read.delim(file.path(Repo_Dir, "data/Blacklist.txt"))
 for (i in 1:nrow(Sample_Info)) {
   Dir <- paste0("RAW/",Sample_Info$Name[i])
   ST_Tem <- Load10X_Spatial(data.dir = Dir,filename = "filtered_feature_bc_matrix.h5",assay = "Spatial")
@@ -30,9 +29,6 @@ for (i in 1:nrow(Sample_Info)) {
   RCTD <- create.RCTD(Object_ST, Object_SC,max_cores = 8)
   RCTD <- run.RCTD(RCTD, doublet_mode = "full")
   ST_Tem[["RCTD"]] <- CreateAssayObject(t(RCTD@results$weights))
-  Path_Result <- paste0("...\\RCTD\\ST\\",Sample_Info$Name[i],"_ST.RDS")
+  Path_Result <- paste0(file.path(Repo_Dir, "data/RCTD/ST/"),Sample_Info$Name[i],"_ST.RDS")
   saveRDS(ST_Tem,file = Path_Result)
 }
-
-
-

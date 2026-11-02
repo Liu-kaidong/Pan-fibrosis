@@ -1,9 +1,9 @@
-
-
+Repo_Dir <- normalizePath(if (exists("Repo_Dir")) Repo_Dir else ".", winslash = "/", mustWork = TRUE)
 #1.Fibroblast Extraction
 library(Seurat)
 library(tidyverse)
 library(harmony)
+library(pheatmap)
 Lung <- readRDS("Lung.RDS")
 Liver <- readRDS("Liver.RDS")
 Kidney <- readRDS("Kidney.RDS")
@@ -21,29 +21,29 @@ Heart_Fib$Tissue <- "Heart"
 Skin_Fib$Tissue <- "Skin"
 Fibroblast <- merge(Lung_Fib, y = c(Kidney_Fib, Liver_Fib, Skin_Fib, Heart_Fib))
 Fibroblast <- JoinLayers(Fibroblast)
-Gene_Del <- read.delim(".../Blacklist.txt")
+Gene_Del <- read.delim(file.path(Repo_Dir, "data/Blacklist.txt"))
 Fibroblast <- Fibroblast[!rownames(Fibroblast) %in% Gene_Del$Gene_Del,]
 Fibroblast <- NormalizeData(Fibroblast) %>% FindVariableFeatures() %>% ScaleData() %>% RunPCA()
 Fibroblast <- RunHarmony(Fibroblast, group.by.vars = c("orig.ident"),max.iter.harmony = 20)
 Fibroblast <- FindNeighbors(Fibroblast, reduction = "harmony", dims = 1:30)
 Fibroblast <- FindClusters(Fibroblast, resolution = 0.8)
 Fibroblast <- RunUMAP(Fibroblast, reduction = "harmony", dims = 1:30)
-saveRDS(Fibroblast,".../Fibroblast.RDS")
-
+saveRDS(Fibroblast,file.path(Repo_Dir, "data/fibroblast/Fibroblast_Gene_Del_Cluster_Del.RDS"))
 
 #2.Fibroblast Deleting
+# Mural cells were annotated outside the fibroblast compartment; the listed exclusions are dataset-specific manual cluster decisions.
 library(Seurat)
 library(ggplot2)
 library(dplyr)
-Fib <- readRDS(".../Fibroblast.RDS") 
-Markers = c('PTPRQ','WT1','NTNG1', # Podocyte
+Fib <- readRDS(file.path(Repo_Dir, "data/fibroblast/Fibroblast_Gene_Del_Cluster_Del.RDS"))
+marker_genes = c('PTPRQ','WT1','NTNG1', # Podocyte
             "RYR2","TNNT2","MYH7", # Cardiomyocyte
             "ALB","TF","TTR", # Hepatocyte
             "CLDN5","PECAM1","VWF",
             "EPCAM","KRT18","KRT19",
             "NRXN1","NRXN3",'MPZ') # Neuronal cell
-DotPlot(Fib, features = split(marker_genes,rep(1:6,each = 3))) + 
-  RotatedAxis() + 
+DotPlot(Fib, features = split(marker_genes,rep(1:6,each = 3))) +
+  RotatedAxis() +
   theme(panel.border = element_rect(color = "black"),
         panel.spacing = unit(2,"mm"),
         axis.text = element_text(color = "black"),
@@ -51,14 +51,13 @@ DotPlot(Fib, features = split(marker_genes,rep(1:6,each = 3))) +
         panel.grid = element_line(color = "grey",linetype = 3,linewidth = 0.5),
         axis.title = element_blank())
 Fib <- subset(Fib,idents = c(14,16,18,19,20,22,23,25,27,29,33,34),invert = TRUE)
-saveRDS(Fib,".../Fibroblast.RDS")
-
+saveRDS(Fib,file.path(Repo_Dir, "data/fibroblast/Fibroblast_Gene_Del_Cluster_Del.RDS"))
 
 #3.Fibroblast Clustering
 library(Seurat)
 library(ggplot2)
 library(dplyr)
-Fib <- readRDS(".../Fibroblast.RDS") 
+Fib <- readRDS(file.path(Repo_Dir, "data/fibroblast/Fibroblast_Gene_Del_Cluster_Del.RDS"))
 Fib_Aggre <- as.matrix(AggregateExpression(Fib,features = VariableFeatures(Fib))$RNA)
 P <- cor(Fib_Aggre)
 calc_csi <- function(pearson_cor) {
@@ -84,22 +83,3 @@ pheatmap(CSI,show_colnames = T,
          treeheight_row = 60,treeheight_col = 60,
          clustering_distance_rows = "euclidean",
          clustering_distance_cols = "euclidean")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

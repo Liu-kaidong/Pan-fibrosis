@@ -1,4 +1,4 @@
-
+Repo_Dir <- normalizePath(if (exists("Repo_Dir")) Repo_Dir else ".", winslash = "/", mustWork = TRUE)
 
 #1.Peak calling
 library(Signac)
@@ -8,7 +8,7 @@ for (i in 1:length(GSM)) {
   total_counts <- CountFragments(fragpath)
   barcodes <- total_counts[total_counts$frequency_count > 1000, ]$CB
   frags <- CreateFragmentObject(path = fragpath, cells = barcodes)
-  peaks <- CallPeaks(frags,macs2.path = ".../.conda/envs/MACS2/bin/macs2")
+  peaks <- CallPeaks(frags,macs2.path = Sys.which("macs2"))
   peak_data <- as.data.frame(peaks)
   bed_data <- data.frame(chr = peak_data$seqnames, start = peak_data$start, end = peak_data$end)
   Chromosome <- paste0("chr",c(1:22,"X","Y"))
@@ -16,7 +16,6 @@ for (i in 1:length(GSM)) {
   outpath <- paste0(GSM[i],"/peaks.bed")
   write.table(bed_data, file = outpath, sep = "\t", row.names = FALSE, col.names = FALSE, quote = FALSE)
 }
-
 
 #2.Pre-processing
 library(Signac)
@@ -29,9 +28,9 @@ annotations <- GetGRangesFromEnsDb(ensdb = EnsDb.Hsapiens.v86)
 seqlevelsStyle(annotations) <- 'UCSC'
 genome(annotations) <- "hg38"
 Data <- c()
-File <- dir(".../Data/RAW")
+File <- dir(file.path(Repo_Dir, "data/Data/RAW"))
 for (i in 1:length(File)) {
-  Fragment <- CreateFragmentObject(path = paste0(".../Data/RAW/",File[i],"/fragments.tsv.gz"))
+  Fragment <- CreateFragmentObject(path = paste0(file.path(Repo_Dir, "data/Data/RAW/"),File[i],"/fragments.tsv.gz"))
   Counts <- FeatureMatrix(fragments = Fragment,features = combined.peaks)
   Assay <- CreateChromatinAssay(Counts, sep = c("-", "-"), fragments = Fragment, min.cells = 10,min.features = 200)
   Data[[i]] <- CreateSeuratObject(Assay, assay = "Peaks")
@@ -53,14 +52,13 @@ Combined <- RunHarmony(Combined,group.by.vars = 'Sample',reduction.use = 'lsi',a
 Combined <- FindNeighbors(Combined, reduction = 'harmony', dims = 2:30)
 Combined <- FindClusters(Combined, verbose = FALSE, algorithm = 3)
 Combined <- RunUMAP(Combined, dims = 2:30, reduction = 'harmony')
-saveRDS(Combined,".../Data_Processing/Data.RDS")
-
+saveRDS(Combined,file.path(Repo_Dir, "data/Data_Processing/Data.RDS"))
 
 #3.Annotation
 library(Signac)
 library(Seurat)
-Data <- readRDS(".../Data_Processing/Data.RDS")
-SC <- readRDS(".../Reference/Reference.RDS")
+Data <- readRDS(file.path(Repo_Dir, "data/Data_Processing/Data.RDS"))
+SC <- readRDS(file.path(Repo_Dir, "data/Reference/Reference.RDS"))
 Anchors <- FindTransferAnchors(reference = SC,query = Data,reduction = 'cca')
 Predicted_Labels <- TransferData(anchorset = Anchors,refdata = SC$Celltype,weight.reduction = Data[['lsi']],dims = 2:30)
 Data <- AddMetaData(object = Data, metadata = Predicted_Labels)
@@ -70,18 +68,17 @@ for(i in levels(Data)) {
   Idents(Data, cells = cells_to_reid) <- newid
 }
 Data$Celltype <- Idents(Data)
-saveRDS(Data,".../Annotation/Data.RDS")
-
+saveRDS(Data,file.path(Repo_Dir, "data/Annotation/Data.RDS"))
 
 #4.Fibroblast Integration
 library(Signac)
 library(Seurat)
 library(ggplot2)
 library(harmony)
-GSE214085 <- readRDS(".../Annotation/GSE214085.RDS")
-GSE195460 <- readRDS(".../Annotation/GSE195460.RDS")
-GSE151302 <- readRDS(".../Annotation/GSE151302.RDS")
-GSE270788 <- readRDS(".../Annotation/GSE270788.RDS")
+GSE214085 <- readRDS(file.path(Repo_Dir, "data/Annotation/GSE214085.RDS"))
+GSE195460 <- readRDS(file.path(Repo_Dir, "data/Annotation/GSE195460.RDS"))
+GSE151302 <- readRDS(file.path(Repo_Dir, "data/Annotation/GSE151302.RDS"))
+GSE270788 <- readRDS(file.path(Repo_Dir, "data/Annotation/GSE270788.RDS"))
 GSE214085 <- subset(GSE214085,idents = "Fibroblast")
 GSE195460 <- subset(GSE195460,idents = "Fibroblast")
 GSE151302 <- subset(GSE151302,idents = "Fibroblast")
@@ -99,12 +96,11 @@ Combined <- RunHarmony(Combined,group.by.vars = "Dataset",max_iter = 20,reductio
 Combined <- FindNeighbors(Combined, reduction = 'harmony', dims = 2:30)
 Combined <- FindClusters(Combined, verbose = FALSE, algorithm = 3)
 Combined <- RunUMAP(Combined, dims = 2:30, reduction = 'harmony')
-saveRDS(Combined,".../Combined_Fib/Combined_Fib.RDS")
-
+saveRDS(Combined,file.path(Repo_Dir, "data/Combined_Fib/Combined_Fib.RDS"))
 
 #5.Fibroblast Annotation
-Fib_ATAC <- readRDS(".../Combined_Fib/Combined_Fib.RDS")
-Fib_SC <- readRDS(".../Reference/Fib_Reference.RDS")
+Fib_ATAC <- readRDS(file.path(Repo_Dir, "data/Combined_Fib/Combined_Fib.RDS"))
+Fib_SC <- readRDS(file.path(Repo_Dir, "data/Reference/Fib_Reference.RDS"))
 Anchors <- FindTransferAnchors(reference = Fib_SC,query = Fib_ATAC,reduction = 'cca')
 Predicted_Labels <- TransferData(anchorset = Anchors,refdata = Fib_SC$Subtype,weight.reduction = Fib_ATAC[['lsi']],dims = 2:30)
 Fib_ATAC <- AddMetaData(object = Fib_ATAC, metadata = Predicted_Labels)
@@ -114,17 +110,14 @@ for(i in levels(Fib_ATAC)) {
   Idents(Fib_ATAC, cells = cells_to_reid) <- newid
 }
 Fib_ATAC$Subtype <- Idents(Fib_ATAC)
-saveRDS(Fib_ATAC,".../Combined_Fib/Fib_ATAC_Annotation.RDS")
-
+saveRDS(Fib_ATAC,file.path(Repo_Dir, "data/Combined_Fib/Fib_ATAC_Annotation.RDS"))
 
 #6.DAR Analysis
 library(Signac)
 library(Seurat)
 library(presto)
-Fib_ATAC <- readRDS(".../Combined_Fib/Fib_ATAC_Annotation.RDS")
+Fib_ATAC <- readRDS(file.path(Repo_Dir, "data/Combined_Fib/Fib_ATAC_Annotation.RDS"))
 DefaultAssay(Fib_ATAC) <- 'Peaks'
 DA_Peaks <- FindAllMarkers(Fib_ATAC,min.pct = 0.1,only.pos = TRUE)
 Marker <- DA_Peaks$gene
 Closest_Genes <- ClosestFeature(Fib_ATAC, regions = Marker)
-
-

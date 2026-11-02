@@ -1,9 +1,10 @@
-
-#Single-cell data pre-processing
+Repo_Dir <- normalizePath(if (exists("Repo_Dir")) Repo_Dir else ".", winslash = "/", mustWork = TRUE)
+#1.Single-cell data pre-processing------------------------------------------------
+# Three-MAD filtering removes high-complexity outliers; no dedicated doublet caller or ambient-RNA correction was run.
 library(Seurat)
 library(harmony)
 HGNC_PCG <- read.delim("HGNC_20240123_PCG.txt")
-Data_Name <- dir("File")
+Data_Name <- dir("Data_RAW")
 Sample <- Data_Name
 Data <- NULL
 for (i in 1:length(Data_Name)) {
@@ -21,6 +22,4 @@ Data <- RunHarmony(Data, group.by.vars = "orig.ident",max.iter.harmony = 20)
 Data <- FindNeighbors(Data, reduction = "harmony", dims = 1:30)
 Data <- FindClusters(Data, resolution = 0.8)
 Data <- RunUMAP(Data, reduction = "harmony", dims = 1:30)
-saveRDS(Data,file = "Result\\Data_Clustering.RDS") 
-
-
+saveRDS(Data,file = "Result\\Data_Clustering.RDS")

@@ -1,4 +1,5 @@
-
+Repo_Dir <- normalizePath(if (exists("Repo_Dir")) Repo_Dir else ".", winslash = "/", mustWork = TRUE)
+# Root selection is prespecified; trajectories describe transcriptional relationships, not established lineage ancestry.
 
 library(Seurat)
 library(SingleCellExperiment)
@@ -6,13 +7,16 @@ library(SeuratWrappers)
 library(slingshot)
 library(tradeSeq)
 library(RColorBrewer)
-Fib <- readRDS(".../Fibroblast.RDS")
+library(dplyr)
+library(ggplot2)
+library(ggrepel)
+Fib <- readRDS(file.path(Repo_Dir, "data/fibroblast/Fibroblast_Gene_Del_Cluster_Del.RDS"))
 sim <- as.SingleCellExperiment(Fib)
-sim <- slingshot(sim, clusterLabels = 'Subtype', reducedDim = 'UMAP',  start.clus= "ecmFib", end.clus = NULL)
+sim <- slingshot(sim, clusterLabels = 'Subtype1', reducedDim = 'UMAP',  start.clus= "ecmFib", end.clus = NULL)
 counts <- sim@assays@data$counts
 crv <- SlingshotDataSet(sim)
 set.seed(5)
-icMat <- evaluateK(counts = counts, sds = crv, k = 3:10, nGenes = 500, verbose = T) 
+icMat <- evaluateK(counts = counts, sds = crv, k = 3:10, nGenes = 500, verbose = T)
 pseudotime <- slingPseudotime(crv, na = FALSE)
 cellWeights <- slingCurveWeights(crv)
 sce <- fitGAM(counts = counts, pseudotime = pseudotime, cellWeights = cellWeights,nknots = 6, verbose = FALSE)
@@ -21,7 +25,8 @@ patternRes <- patternTest(sce)
 patternRes$Gene <- rownames(patternRes)
 patternRes <- patternRes[order(patternRes$pvalue,decreasing = F),]
 patternRes <- patternRes[!is.na(patternRes$pvalue),]
-patternRes$FDR <- p.adjust(patternRes$pvalue)
+patternRes$FDR <- p.adjust(patternRes$pvalue, method = "holm")
+if (!"fcMedian" %in% colnames(patternRes)) stop("The historical volcano plot requires its saved patternRes with fcMedian; patternTest output alone may not provide this column.")
 patternRes$log2FC <- log2(patternRes$fcMedian)
 patternRes$log2FC[patternRes$log2FC > 6] <- 6
 patternRes$log2FC[patternRes$log2FC < -6] <- -6
@@ -47,7 +52,7 @@ dff_curve <- Curve(10)
 mycol<- c("#8A292E", "#404472", "#d8d8d8")
 patternRes <- patternRes[rownames(patternRes) %in% TF$Symbol,]
 patternRes <- patternRes[order(patternRes$pvalue),]
-patternRes$FDR <- p.adjust(patternRes$pvalue)
+patternRes$FDR <- p.adjust(patternRes$pvalue, method = "holm")
 patternRes$log10FDR <- -log10(patternRes$FDR)
 patternRes$log10FDR[patternRes$log10FDR == "Inf"] <- 15
 patternRes$Label <- patternRes$Gene
@@ -71,7 +76,7 @@ ggplot(data = patternRes,aes(x = log2FC, y = log10FDR, color = group2)) +
         legend.text = element_text(size = 15),
         legend.key = element_blank(),
         legend.title = element_blank()) +
-  geom_text_repel(aes(label = Label),size = 4,max.overlaps = 10000,              
+  geom_text_repel(aes(label = Label),size = 4,max.overlaps = 10000,
                   box.padding = unit(0.5,"lines"),
                   point.padding = unit(0, "lines"))
 
@@ -83,5 +88,3 @@ plotSmoothers(sce, counts, "CDKN1A", alpha = 0) + labs(title = "CDKN1A") +
   theme_classic() + theme(axis.title = element_text(size = 15),axis.text = element_text(size = 14),legend.text = element_text(size = 14))
 plotSmoothers(sce, counts, "HIF1A", alpha = 0) + labs(title = "HIF1A") +
   theme_classic() + theme(axis.title = element_text(size = 15),axis.text = element_text(size = 14),legend.text = element_text(size = 14))
-
-

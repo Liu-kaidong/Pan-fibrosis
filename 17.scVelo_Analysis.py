@@ -1,5 +1,3 @@
-
-
 import anndata
 import scvelo as scv
 import pandas as pd
@@ -7,16 +5,16 @@ import numpy as np
 import matplotlib as plt
 scv.logging.print_version()
 
-IPF01 = anndata.read_loom(".../Loom/IPF_01.loom")
-IPF02 = anndata.read_loom(".../Loom/IPF_02.loom")
-IPF03 = anndata.read_loom(".../Loom/IPF_03.loom")
-IPF04 = anndata.read_loom(".../Loom/IPF_04.loom")
-IPF05 = anndata.read_loom(".../Loom/IPF_05.loom")
-HF01 = anndata.read_loom(".../Loom/HF_01.loom")
-HF02 = anndata.read_loom(".../Loom/HF_02.loom")
-HF03 = anndata.read_loom(".../Loom/HF_03.loom")
-HF04 = anndata.read_loom(".../Loom/HF_04.loom")
-HF05 = anndata.read_loom(".../Loom/HF_05.loom")
+IPF01 = anndata.read_loom("data/Loom/IPF_01.loom")
+IPF02 = anndata.read_loom("data/Loom/IPF_02.loom")
+IPF03 = anndata.read_loom("data/Loom/IPF_03.loom")
+IPF04 = anndata.read_loom("data/Loom/IPF_04.loom")
+IPF05 = anndata.read_loom("data/Loom/IPF_05.loom")
+HF01 = anndata.read_loom("data/Loom/HF_01.loom")
+HF02 = anndata.read_loom("data/Loom/HF_02.loom")
+HF03 = anndata.read_loom("data/Loom/HF_03.loom")
+HF04 = anndata.read_loom("data/Loom/HF_04.loom")
+HF05 = anndata.read_loom("data/Loom/HF_05.loom")
 IPF01.var_names_make_unique()
 IPF02.var_names_make_unique()
 IPF03.var_names_make_unique()
@@ -28,9 +26,9 @@ HF03.var_names_make_unique()
 HF04.var_names_make_unique()
 HF05.var_names_make_unique()
 
-sample_obs = pd.read_csv(".../scVelo/Input/cellID_obs.csv")
-umap = pd.read_csv(".../scVelo/Input/cell_embeddings.csv")
-cell_clusters = pd.read_csv(".../scVelo/Input/clusters_obs.csv")
+sample_obs = pd.read_csv("data/scVelo/Input/cellID_obs.csv")
+umap = pd.read_csv("data/scVelo/Input/cell_embeddings.csv")
+cell_clusters = pd.read_csv("data/scVelo/Input/clusters_obs.csv")
 
 IPF01 = IPF01[np.isin(IPF01.obs.index,sample_obs["x"])]
 IPF02 = IPF02[np.isin(IPF02.obs.index,sample_obs["x"])]
@@ -69,4 +67,4 @@ scv.pp.moments(adata)
 scv.tl.recover_dynamics(adata)
 scv.tl.velocity(adata, mode='dynamical')
 scv.tl.velocity_graph(adata)
-scv.pl.velocity_embedding_stream(adata, basis="umap",palette = ["#D6C6A5","#4975A5","#93A95D"],save='.../scVelo/Velocity_Dynamical.svg')
+scv.pl.velocity_embedding_stream(adata, basis="umap",palette = ["#D6C6A5","#4975A5","#93A95D"],save='data/scVelo/Velocity_Dynamical.svg')

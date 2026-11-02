@@ -1,13 +1,13 @@
-
+Repo_Dir <- normalizePath(if (exists("Repo_Dir")) Repo_Dir else ".", winslash = "/", mustWork = TRUE)
 
 library(nichenetr)
 library(Seurat)
 library(presto)
 library(tidyverse)
-Fib <- readRDS(".../Fibroblast.RDS")
-lr_network <- readRDS(".../NicheNet/lr_network_human_21122021.rds")
-ligand_target_matrix <- readRDS(".../NicheNet/ligand_target_matrix_nsga2r_final.rds")
-weighted_networks <- readRDS(".../NicheNet/weighted_networks_nsga2r_final.rds")
+Fib <- readRDS(file.path(Repo_Dir, "data/fibroblast/Fibroblast_Gene_Del_Cluster_Del.RDS"))
+lr_network <- readRDS(file.path(Repo_Dir, "data/NicheNet/lr_network_human_21122021.rds"))
+ligand_target_matrix <- readRDS(file.path(Repo_Dir, "data/NicheNet/ligand_target_matrix_nsga2r_final.rds"))
+weighted_networks <- readRDS(file.path(Repo_Dir, "data/NicheNet/weighted_networks_nsga2r_final.rds"))
 lr_network <- lr_network %>% distinct(from, to)
 receiver = "ecmFib"
 #1.Define a set of potential ligands for the sender-agnostic approach
@@ -31,6 +31,5 @@ ligand_activities <- ligand_activities %>% arrange(-aupr_corrected) %>% mutate(r
 best_upstream_ligands <- ligand_activities %>% top_n(10, aupr_corrected) %>% arrange(-aupr_corrected) %>% pull(test_ligand)
 vis_ligand_aupr <- ligand_activities %>% filter(test_ligand %in% best_upstream_ligands) %>%
   column_to_rownames("test_ligand") %>% select(aupr_corrected) %>% arrange(aupr_corrected) %>% as.matrix(ncol = 1)
-p_ligand_aupr <- make_heatmap_ggplot(vis_ligand_aupr,"Prioritized ligands", "Ligand activity", legend_title = "AUPR", color = "darkorange") + 
-  theme(axis.text.x.top = element_blank()) 
-
+p_ligand_aupr <- make_heatmap_ggplot(vis_ligand_aupr,"Prioritized ligands", "Ligand activity", legend_title = "AUPR", color = "darkorange") +
+  theme(axis.text.x.top = element_blank())

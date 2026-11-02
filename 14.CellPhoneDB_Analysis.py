@@ -1,4 +1,3 @@
-
 import cellphonedb
 from cellphonedb.src.core.methods import cpdb_statistical_analysis_method
 Result = cpdb_statistical_analysis_method.call(
@@ -7,4 +6,4 @@ Result = cpdb_statistical_analysis_method.call(
         counts_file_path = "Exp_All_Subtype.txt",
         counts_data = 'hgnc_symbol',
         threshold = 0.1,
-        output_path = ".../2.CellPhoneDB/Result")
+        output_path = "data/2.CellPhoneDB/Result")

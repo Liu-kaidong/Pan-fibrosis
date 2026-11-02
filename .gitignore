@@ -1,0 +1,15 @@
+Results/
+data/
+**/Checkpoints/
+**/Logs/
+**/Tables/
+**/_runtime/
+**/__pycache__/
+**/figures/
+*.pyc
+.Rhistory
+.RData
+.Rproj.user/
+
+# Keep local input workbooks out of the public repository.
+Inputs/**/*.xlsx

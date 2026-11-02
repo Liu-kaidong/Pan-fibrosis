@@ -1,4 +1,4 @@
-
+Repo_Dir <- normalizePath(if (exists("Repo_Dir")) Repo_Dir else ".", winslash = "/", mustWork = TRUE)
 
 library(ISCHIA)
 library(robustbase)
@@ -6,7 +6,7 @@ library(data.table)
 library(ggplot2)
 library(Seurat)
 library(dplyr)
-Sample_Info <- read.delim(".../ST_Sample_Info.txt")
+Sample_Info <- read.delim(file.path(Repo_Dir, "data/ST_Sample_Info.txt"))
 Sample_Info$Severity_Index <- ifelse(Sample_Info$Description_B1_Mild_B2_Moderate_B3_Severe == "B1","Mild",
                                      ifelse(Sample_Info$Description_B1_Mild_B2_Moderate_B3_Severe == "B2","Moderate",
                                             ifelse(Sample_Info$Description_B1_Mild_B2_Moderate_B3_Severe == "B3","Severe","Normal")))
@@ -35,7 +35,7 @@ ggplot(Embedding, aes(x = x, y = y)) +
   geom_point(aes(color = CompositionCluster_CC),size = 0.1,alpha = 0.8) +
   scale_color_manual(values = c("#E8797B","#B1B0E9","#D7BBB0","#7F3C8D","#11A579","#3969AC","#F2B701","#E73F74")) +
   scale_fill_manual(values = c("#E8797B","#B1B0E9","#D7BBB0","#7F3C8D","#11A579","#3969AC","#F2B701","#E73F74")) +
-  guides(color = guide_legend(override.aes = list(size = 5))) +  #Í¼Àýµã´óÐ¡
+  guides(color = guide_legend(override.aes = list(size = 5))) +
   labs(x = "umap_1",y = "umap_2") +
   theme(axis.line = element_line(size = 0.5),
         axis.ticks = element_line(size = 0.5),
@@ -49,6 +49,3 @@ ggplot(Embedding, aes(x = x, y = y)) +
         legend.text = element_text(size = 10),
         legend.key = element_blank(),
         legend.title = element_blank())
-
-
-

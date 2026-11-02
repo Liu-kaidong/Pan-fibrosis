@@ -1,9 +1,11 @@
-
-
+Repo_Dir <- normalizePath(if (exists("Repo_Dir")) Repo_Dir else ".", winslash = "/", mustWork = TRUE)
 library(dplyr)
 library(RColorBrewer)
 library(pheatmap)
-Meta_All <- read.delim(".../Meta_All.txt")
+Meta_All <- read.delim(file.path(Repo_Dir, "data/Meta_All.txt"))
+Meta_All <- Meta_All[Meta_All$Fibrosis_State == "Fibrosis", ]
+Meta_All <- Meta_All[!Meta_All$Subtype %in% c("RGCs", "LSECs"), ]
+# Proportions are sample-level within-parent-cell-type values pooled across organs.
 Meta_All$Subtype <- paste0(Meta_All$Celltype,"_",Meta_All$Subtype)
 Meta_Endothelial <- Meta_All[Meta_All$Celltype == "Endothelial",c("orig.ident","Subtype")]
 Meta_Macrophage <- Meta_All[Meta_All$Celltype == "Macrophage",c("orig.ident","Subtype")]
@@ -35,7 +37,7 @@ for (i in 1:ncol(Result_Freq)) {
   }
 }
 colnames(Result_Cor) <- c("Subtype1","Subtype2","Cor")
-Result_Matrix <- matrix(as.numeric(Result_Cor[,3]),ncol = 31)
+Result_Matrix <- matrix(as.numeric(Result_Cor[,3]),ncol = ncol(Result_Freq))
 rownames(Result_Matrix) <- colnames(Result_Freq)
 colnames(Result_Matrix) <- colnames(Result_Freq)
 pheatmap(Result_Matrix,show_colnames = T,
@@ -45,6 +47,3 @@ pheatmap(Result_Matrix,show_colnames = T,
          treeheight_row = 60,treeheight_col = 60,
          clustering_distance_rows = "euclidean",
          clustering_distance_cols = "euclidean")
-
-
-
